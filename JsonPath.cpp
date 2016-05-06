@@ -31,8 +31,6 @@ namespace {
 void parseJsonObject(json_object * jobj, const std::string& item, json_object*& currentObj) {
 
     json_object_object_foreach(jobj, key, val) {
-
-        std::cout << "key: "<< key << std::endl;
         std::string strKey(key);
         if(strKey != item ){
             continue; //go to the next key, we don't need this one
@@ -55,7 +53,8 @@ void getReferenceToCurrentKey(json_object* jobjToSearch, const std::string& keyT
         case json_type_boolean:
         case json_type_double:
         case json_type_int:
-        case json_type_string: {
+        case json_type_string:
+        case json_type_array: {
             jobjFound = jobjToSearch; //only 1 obj -> has the value we need
             break;
         }
@@ -66,11 +65,8 @@ void getReferenceToCurrentKey(json_object* jobjToSearch, const std::string& keyT
 
 }//namespace
 
-JsonPath& JsonPath::getItem(std::string path)
+JsonPath& JsonPath::getItem(const std::string& path)
 {
-    //clear old data
-    m_pimpl->m_pJCurrentObj = NULL;
-
     //extract path in a queue
     std::queue<std::string> pathQueue;
     size_t pos = 0;
@@ -133,8 +129,35 @@ std::string JsonPath::stringValue()
             strValue = str;
             break;
         }
+        case json_type_object:
+        case json_type_array:{
+            strValue = json_object_to_json_string(m_pimpl->m_pJCurrentObj);
+            break;
+        }
         default: break;
         }
     }
     return strValue;
+}
+
+JsonPath& JsonPath::at(unsigned int position)
+{
+    json_object* pJObj = NULL;
+    //we're in the root
+    if(NULL == m_pimpl->m_pJCurrentObj){
+        pJObj = m_pimpl->m_pJobj;
+    }
+    else { //we're in a node in the json
+        pJObj = m_pimpl->m_pJCurrentObj;
+    }
+
+    m_pimpl->m_pJCurrentObj = json_object_array_get_idx(pJObj, position);
+
+    return *this;
+}
+
+void JsonPath::clear()
+{
+    //clear old data
+    m_pimpl->m_pJCurrentObj = NULL;
 }
