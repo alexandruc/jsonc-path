@@ -5,6 +5,6 @@ int main()
 {
     std::string json = "{\"id\" : 1}";
     JsonPath jpath(json);
-    jpath.getItem("id.test.name");
+    std::cout << jpath.getItem("id").stringValue() << std::endl;
     return 0;
 }

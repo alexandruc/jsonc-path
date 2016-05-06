@@ -7,6 +7,7 @@ class JsonPath
 {
 public:
     explicit JsonPath(const std::string& json);
+    ~JsonPath();
 
     JsonPath& getItem(std::string path);
 
