@@ -17,9 +17,7 @@ JsonPath::JsonPath()
 
 JsonPath::~JsonPath()
 {
-    if(1 == json_object_put(m_pimpl->m_pJobj)){
-        std::cout << "object was deallocated correctly" << std::endl;
-    }
+    json_object_put(m_pimpl->m_pJobj);
     delete m_pimpl;
 }
 
@@ -42,6 +40,7 @@ void parseJsonObject(json_object * jobj, const std::string& item, json_object*& 
         else{
             //we found our json object for this item, keep a reference in order to extract a value, or
             currentObj = val;
+            break;
         }
     }
 }
