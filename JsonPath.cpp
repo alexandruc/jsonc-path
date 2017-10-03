@@ -4,11 +4,18 @@
 #include <string>
 #include <iostream>
 #include <queue>
+#include <cstdio>
 
 struct JsonPath::Pimpl {
     std::string currentValue;
     json_object* m_pJobj; //base json file
     json_object* m_pJCurrentObj; //current json object being interogated
+
+    Pimpl()
+    {
+        m_pJobj = NULL;
+        m_pJCurrentObj = NULL;
+    }
 };
 
 JsonPath::JsonPath()
@@ -29,7 +36,7 @@ JsonPath::JsonPath(const std::string& json) : m_pimpl(new Pimpl())
 namespace {
 
 void parseJsonObject(json_object * jobj, const std::string& item, json_object*& currentObj) {
-
+    bool bKeyFound = false;
     json_object_object_foreach(jobj, key, val) {
         std::string strKey(key);
         if(strKey != item ){
@@ -38,8 +45,13 @@ void parseJsonObject(json_object * jobj, const std::string& item, json_object*& 
         else{
             //we found our json object for this item, keep a reference in order to extract a value, or
             currentObj = val;
+            bKeyFound = true;
             break;
         }
+    }
+    //set the value to empty if the key does not exist
+    if(!bKeyFound){
+        currentObj = NULL;
     }
 }
 
@@ -87,7 +99,11 @@ JsonPath& JsonPath::getItem(const std::string& path)
         if( NULL == m_pimpl->m_pJCurrentObj &&
                 NULL != m_pimpl->m_pJobj &&
                 false == currentKey.empty()){
-            getReferenceToCurrentKey(m_pimpl->m_pJobj, currentKey, m_pimpl->m_pJCurrentObj);
+            json_type type = json_object_get_type(m_pimpl->m_pJobj);
+            //if there is no object in the json, it means we don't have any keys -> not a valid json
+            if(type == json_type_object){
+                getReferenceToCurrentKey(m_pimpl->m_pJobj, currentKey, m_pimpl->m_pJCurrentObj);
+            }
         }
         else if( NULL != m_pimpl->m_pJCurrentObj &&
                  false == currentKey.empty()){
@@ -154,6 +170,17 @@ JsonPath& JsonPath::at(unsigned int position)
     m_pimpl->m_pJCurrentObj = json_object_array_get_idx(pJObj, position);
 
     return *this;
+}
+
+size_t JsonPath::size() const
+{
+    if(m_pimpl->m_pJCurrentObj != nullptr && json_object_get_type(m_pimpl->m_pJCurrentObj) == json_type_array){
+        return json_object_array_length(m_pimpl->m_pJCurrentObj);
+    }
+    else if(m_pimpl->m_pJobj != nullptr && json_object_get_type(m_pimpl->m_pJobj) == json_type_array){
+        return json_object_array_length(m_pimpl->m_pJobj);
+    }
+    return 0;
 }
 
 void JsonPath::clear()

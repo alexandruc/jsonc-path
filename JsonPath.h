@@ -24,6 +24,12 @@ public:
     JsonPath& at(unsigned int position);
 
     /**
+     * @brief Returns the size of the array object, if the current object is an array
+     * @return Size of the array object. In case the current object is not an array, it returns 0
+     */
+    size_t size() const;
+
+    /**
      * @brief Gets the string value of the current key in selected by the getItem method
      * @return String value of the element selected
      */
